@@ -1,12 +1,18 @@
 from django.db import models
 
-# Create your models here.
-
-class Courses(models.Model):
+# course in real world
+class CourseNames(models.Model):
     cname = models.CharField(max_length = 100)
-    description = models.CharField(max_length = 2000)
+    description = models.CharField(max_length = 200)
     def __unicode__(self):
         return "Course name : " + cname
+
+# book in real world
+class BookNames(models.Model):
+    bname = models.CharField(max_length = 100)
+    description = models.CharField(max_length = 200)
+    def __unicode__(self):
+        return "Book name : " + bname
 
 class Books(models.Model):
     bname = models.CharField(max_length = 100)
@@ -18,9 +24,15 @@ class Books(models.Model):
     def __unicode__(self):
         return "Book name : " + bname + "\nauthor : " + author + "\npublisher : " + publisher
 
-class Relation(models.Model):
+class CourseRelation(models.Model):
     # one course has several correlated books
-    course = models.ForeignKey(Courses)
+    course = models.ForeignKey(CourseNames)
     # not every book has relation with course, eg : search book directly by book name
+    bid = models.IntegerField(default = 0)
+    click = models.IntegerField(default = 0)
+
+class BookRelation(models.Model):
+    # one bookname has several correlated books in sysu library
+    book = models.ForeignKey(BookNames)
     bid = models.IntegerField(default = 0)
     click = models.IntegerField(default = 0)

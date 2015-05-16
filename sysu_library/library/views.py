@@ -17,19 +17,19 @@ def searchByCourse(requset):
         return HttpResponse("Request error") 
     try:
         # check whether this couse is in database
-        c = Course.objects.get(cname = course)
+        c = CourseNames.objects.get(cname = course)
         # return the historic result
         xml =  getExistCourseRecord(c)
         return xml
-    except Course.DoesNotExist:
+    except CourseNames.DoesNotExist:
         # this course has not been searched before
         # search it, and store the result in database
         cr = CourseReptile()
         booksNames = cr.course_search(course)
         # if not correlated book for this course
         if not len(booksNames):
-            return HttpResponse("No correlated book")
-        c = Coures.objects.create(cname = course, description = "")
+            return HttpResponse("No relative book for this course!")
+        c = CourseNames.objects.create(cname = course, description = "")
         c.save()
         xml = ""
         for bookName in booksNames:
@@ -42,16 +42,21 @@ def searchByCourse(requset):
                 # construct the return xml
                 xml += getBookItemXml(bookid)
                 # create the relation for this new course and the the relative book
-                r = Relation.objects.create(course = c, bid = bookid, click = 0)
+                r = CourseRelation.objects.create(course = c, bid = bookid, click = 0)
                 r.save()
-        return xml
+        if xml == ""：
+            return HttpResponse("No relative book for this course!")
+        head = '''<?xml version="1.0" encoding="UTF-8"?>\n''' +\
+               '''<bookList>\n'''
+        tail = '''</bookList>'''
+        return head + xml + tail
 
 # service for function searchByCourse
 def getExistCourseRecord(course_object):
-    relations = c.relation_set.all()
+    relations = c.courserelation_set.all()
     bookids = [r.bid for r in relations]
-    xml = '''<?xml version="1.0" encoding="UTF-8"?>\n'''
-    xml += '''<bookList>\n'''
+    xml = '''<?xml version="1.0" encoding="UTF-8"?>\n''' +\
+          '''<bookList>\n'''
     for bookid in bookids:
         xml += getBookItemXml(bookid)
     xml += '''</bookList>'''
@@ -87,11 +92,55 @@ def storeBookItem(item):
     b.save()
     return b.id
 
-def getExistBookRecord():
-    pass
 
+'''
+search books directly by book name
+return the result as xml
+service for android application
+the logic is different from the function "searchByCourse"!
+'''
 def searchByBook(requset):
-    pass
+    try:
+        course = requset.GET["book"]
+    except:
+        return HttpResponse("Request error") 
+    try:
+        # check whether this book is in database
+        b = BookNames.objects.get(bname = course)
+        # return the historic result
+        xml =  getExistBookRecord(b)
+        return xml
+    except BookNames.DoesNotExist:
+        # this book name has not been searched before
+        # search it, and store the result in database
+        # books is a list of dictionary
+        books = wait_for_xiongtao_api()
+        # if not correlated book for this course
+        if not len(booksNames):
+            return HttpResponse("No relative book in sysu library!")
+        b = BookNames.objects.create(bname = course, description = "")
+        b.save()
+        xml = ""
+        # some database operation
+        for book in books:
+            # book is a dictionary
+            bookid = storeBookItem(book)
+            # construct the return xml
+            xml += getBookItemXml(bookid)
+            # create the relation for this new course and the the relative book
+            r = BookRelation.objects.create(book = b, bid = bookid, click = 0)
+            r.save()
+        return xml
+
+def getExistBookRecord(b):
+    relations =  b.bookrelation_set.all()
+    bookids = [r.bid for r in relations]
+    xml = '''<?xml version="1.0" encoding="UTF-8"?>\n''' +\
+          '''<bookList>\n'''
+    for bookid in bookids:
+        xml += getBookItemXml(bookid)
+    xml += '''</bookList>'''
+    return xml
 
 def getBookDetail(requset):
     pass
